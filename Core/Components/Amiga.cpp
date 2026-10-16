@@ -223,7 +223,13 @@ Amiga::checkOption(Opt opt, i64 value)
             return;
             
         case Opt::AMIGA_RUN_AHEAD:
-            
+
+#ifdef VAMIGA_NO_RUNAHEAD
+            // ENiGMA patch: no run-ahead instance, no run-behind textures
+            if (value != 0) {
+                throw CoreError(CoreError::OPT_INV_ARG, "0 (built without run-ahead)");
+            }
+#endif
             if (value < -7 || value > 7) {
                 throw CoreError(CoreError::OPT_INV_ARG, "-7...7");
             }

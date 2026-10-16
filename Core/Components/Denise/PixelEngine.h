@@ -40,7 +40,12 @@ class PixelEngine final : public SubComponent {
 
 private:
 
+#ifdef VAMIGA_NO_RUNAHEAD
+    // ENiGMA patch: without run-behind only the working and the stable buffer are used
+    static constexpr isize NUM_TEXTURES = 2;
+#else
     static constexpr isize NUM_TEXTURES = 8;
+#endif
     
     /* The emulator manages textures in a ring buffer to allow access to older
      * frames ("run-behind" feature). At any time, one texture serves as the
