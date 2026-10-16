@@ -20,6 +20,15 @@ Thread::launch()
     assert(!isLaunched());
     assert(!isInitialized());
 
+#ifdef VAMIGA_NO_THREAD
+
+    // ENiGMA patch: initialize on the caller's thread instead of spawning one
+    initialize();
+    launched = true;
+    return;
+
+#endif
+
     // Start the thread and enter the main function
     thread = std::thread(&Thread::runLoop, this);
 
@@ -29,6 +38,37 @@ Thread::launch()
     assert(isLaunched());
     assert(isInitialized());
 }
+
+#ifdef VAMIGA_NO_THREAD
+
+void
+Thread::runFrames(isize n)
+{
+    // Prepare for the next frame(s), as runLoop() does
+    update();
+
+    if (!isRunning()) return;
+
+    lock.lock();
+    loadClock.go();
+
+    try {
+
+        for (isize i = 0; i < n; i++, frameCounter++) computeFrame();
+
+    } catch (StateChangeException &exc) {
+
+        // Serve a state change request
+        switchState((ExecState)exc.payload);
+    }
+
+    loadClock.stop();
+    lock.unlock();
+
+    computeStats();
+}
+
+#endif
 
 void
 Thread::resync()

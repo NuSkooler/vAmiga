@@ -36,6 +36,14 @@ protected:
 
     // The thread object
     std::thread thread;
+
+#ifdef VAMIGA_NO_THREAD
+    /* ENiGMA patch: in a build without an emulator thread (VAMIGA_NO_THREAD),
+     * launch() initializes on the caller's thread and the host drives the
+     * emulator with runFrames(). This flag replaces thread.joinable().
+     */
+    bool launched = false;
+#endif
     
     // The current thread state
     ExecState state = ExecState::OFF;
@@ -84,7 +92,11 @@ public:
     const char *objectName() const override { return "Thread"; }
 
     // Checks the launch state
+#ifdef VAMIGA_NO_THREAD
+    bool isLaunched() const { return launched; }
+#else
     bool isLaunched() const { return thread.joinable(); }
+#endif
 
 protected:
 
@@ -99,8 +111,21 @@ protected:
 public:
 
     // Returns true if this functions is called inside or outside the emulator thread
+#ifdef VAMIGA_NO_THREAD
+    // With no emulator thread, the one thread there is plays both roles
+    bool isEmulatorThread() const { return true; }
+    bool isUserThread() const { return true; }
+
+    /* Runs one pass of the emulator loop on the calling thread: processes the
+     * command queue, then computes n frames (if the emulator is running) and
+     * serves a state change raised in the middle of a frame. Pacing is the
+     * caller's business; isWarping() says whether it should run flat out.
+     */
+    void runFrames(isize n);
+#else
     bool isEmulatorThread() const { return std::this_thread::get_id() == thread.get_id(); }
     bool isUserThread() const { return std::this_thread::get_id() != thread.get_id(); }
+#endif
     
     // Performs a state change
     void switchState(ExecState newState);
