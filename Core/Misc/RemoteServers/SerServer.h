@@ -43,6 +43,11 @@ public:
     
     using SocketServer::SocketServer;
 
+    // ENiGMA patch: lets a host that feeds processIncomingByte() directly apply
+    // back-pressure instead of overflowing the receive buffer
+    isize bufferedBytes() const { return buffer.count(); }
+    isize bufferCapacity() const { return buffer.cap(); }
+
     SerServer& operator= (const SerServer& other) {
 
         SocketServer::operator = (other);
