@@ -83,6 +83,10 @@ UART::peekSERDATR()
     // Clear the overrun bit if the interrupt has been acknowledged
     if (!rbf) ovrun = false;
 
+    // ENiGMA patch: the CPU has read the receive buffer after acknowledging
+    // RBF (a read while RBF is pending, e.g. a TBE poll, does not count)
+    if (!rbf) rxUnread = false;
+
     u16 result = spypeekSERDATR();
     logdebug(SER_DEBUG, "peekSERDATR() = %x\n", result);
     return result;
@@ -192,6 +196,7 @@ UART::copyFromReceiveShiftRegister()
     
     receiveBuffer = receiveShiftReg;
     receiveShiftReg = 0;
+    rxUnread = true;
 
     // Record incoming data
     recordIncomingByte(receiveBuffer);

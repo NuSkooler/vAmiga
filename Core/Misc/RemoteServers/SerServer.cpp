@@ -149,6 +149,12 @@ SerServer::serviceSerEvent()
         // Exit buffering mode if now new symbols came in for quite a while
         if (++skippedTransmissions > 8) buffering = false;
 
+    } else if (uart.hasUnreadByte()) {
+
+        // ENiGMA patch (flow control): the CPU has not read the previous byte
+        // from SERDATR yet. Hold this one instead of overwriting the single-byte
+        // receive buffer, so a slow guest loses nothing.
+
     } else {
 
         // Hand the oldest buffer element over to the UART

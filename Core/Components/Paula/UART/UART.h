@@ -60,6 +60,9 @@ private:
     // Bit reception counter
     u8 recCnt;
 
+    // ENiGMA patch: a received byte the CPU has not read from SERDATR yet
+    bool rxUnread = false;
+
     // Experimental
     string payload;
 
@@ -82,6 +85,7 @@ public:
         CLONE(outBit)
         CLONE(ovrun)
         CLONE(recCnt)
+        CLONE(rxUnread)
 
         return *this;
     }
@@ -105,7 +109,8 @@ private:
         << transmitShiftReg
         << outBit
         << ovrun
-        << recCnt;
+        << recCnt
+        << rxUnread;
 
     } SERIALIZERS(serialize);
 
@@ -150,6 +155,7 @@ public:
     
     // Serial port data and status read
     u16 peekSERDATR();
+    bool hasUnreadByte() const { return rxUnread; }
     u16 spypeekSERDATR() const;
 
     // Serial port data and stop bits write
